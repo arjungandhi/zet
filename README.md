@@ -1,7 +1,6 @@
 # 🌳 Zet a cli for managing my zettelkasten 
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/arjungandhi/zet?style=flat-square)](https://goreportcard.com/report/github.com/arjungandhi/zet)
-[![Go Doc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](http://godoc.org/github.com/arjungandhi/zet)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/arjungandhi/zet)](https://pkg.go.dev/github.com/arjungandhi/zet)
 [![Release](https://img.shields.io/github/release/arjungandhi/zet.svg?style=flat-square)](https://github.com/arjungandhi/zet/releases/latest)
 
