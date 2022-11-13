@@ -3,6 +3,7 @@ module github.com/arjungandhi/zet
 go 1.19
 
 require (
+	github.com/manifoldco/promptui v0.9.0
 	github.com/rwxrob/bonzai v0.19.0
 	github.com/rwxrob/help v0.5.2
 	github.com/rwxrob/uniq-go v0.4.3
@@ -10,6 +11,7 @@ require (
 )
 
 require (
+	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/rogpeppe/go-internal v1.8.1 // indirect
 	github.com/rwxrob/compcmd v0.3.0 // indirect
 	github.com/rwxrob/fn v0.3.3 // indirect
