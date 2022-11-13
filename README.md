@@ -12,7 +12,7 @@ Bonzai command tree.
 Standalone
 
 ```
-go install github.com/arjungandi/zet/cmd/zet@latest
+go install github.com/arjungandhi/zet/cmd/zet@latest
 ```
 
 Composed
