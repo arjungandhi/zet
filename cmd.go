@@ -9,6 +9,7 @@ import (
 	"github.com/rwxrob/vars"
 
 	"github.com/arjungandhi/zet/create"
+	"github.com/arjungandhi/zet/title"
 )
 
 // init runs immediately after the package is loaded.
@@ -43,5 +44,6 @@ var Cmd = &Z.Cmd{
 		help.Cmd,
 		vars.Cmd,
 		create.Cmd,
+		title.Cmd,
 	},
 }
