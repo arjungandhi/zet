@@ -54,7 +54,7 @@ var noteCmd = &Z.Cmd{
 			note.Title = result
 		}
 
-		zetdir := Z.Vars.Get("zetdir")
+		zetdir := Z.Vars.Get(".zet.zetdir")
 
 		notePath := zetdir + "/notes/" + uniq.IsoSecond()
 
@@ -67,7 +67,7 @@ var noteCmd = &Z.Cmd{
 		// create a new file for the note
 		noteFile, err := os.Create(notePath + "/README.md")
 
-		snippets := Z.Vars.Get("snippets")
+		snippets := Z.Vars.Get(".zet.snipdir")
 		// use the Read the contents of the snippet if it exists
 		snippet, err := os.ReadFile(snippets + "/zet/note.md")
 		if err == nil {
@@ -131,7 +131,7 @@ var urlCmd = &Z.Cmd{
 		}
 		urlFields.Title = result
 
-		zetdir := Z.Vars.Get("zetdir")
+		zetdir := Z.Vars.Get(".zet.zetdir")
 
 		urlPath := zetdir + "/notes/" + uniq.IsoSecond()
 
@@ -144,7 +144,7 @@ var urlCmd = &Z.Cmd{
 		// create a new file for the url
 		urlNote, err := os.Create(urlPath + "/README.md")
 
-		snippets := Z.Vars.Get("snippets")
+		snippets := Z.Vars.Get(".zet.snipdir")
 		// use the Read the contents of the snippet if it exists
 		snippet, err := os.ReadFile(snippets + "/zet/url.md")
 		if err == nil {

@@ -1,5 +1,4 @@
-// package node defines a standard node interface for information stored in the zet
-// each node type provides methods to access the node's data
+// Package node is a package that contains the Node interface and its implementations
 package node
 
 import (

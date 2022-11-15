@@ -24,15 +24,15 @@ func init() {
 		os.Exit(1)
 	}
 
-	snippets, exists := os.LookupEnv("SNIPPETS")
+	snipdir, exists := os.LookupEnv("SNIPPETS")
 	if !exists {
 		fmt.Println("SNIPPETS environment variable not set")
 		os.Exit(1)
 	}
 
 	// set the zetdir var
-	Z.Vars.Set("zetdir", zetdir)
-	Z.Vars.Set("snippets", snippets)
+	Z.Vars.Set(".zet.zetdir", zetdir)
+	Z.Vars.Set(".zet.snipdir", snipdir)
 }
 
 // rootCmd is the main command for the zet command line tool

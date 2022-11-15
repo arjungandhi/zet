@@ -22,7 +22,7 @@ var Cmd = &Z.Cmd{
 		help.Cmd,
 	},
 	Call: func(x *Z.Cmd, args ...string) error {
-		zetdir := Z.Vars.Get("zetdir")
+		zetdir := Z.Vars.Get(".zet.zetdir")
 		// What this function does is walk the filesystem and dispatch various files
 		// to functions to get the title of the file. The title is then printed
 		// to stdout.
