@@ -4,6 +4,8 @@
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/arjungandhi/zet)](https://pkg.go.dev/github.com/arjungandhi/zet)
 [![Release](https://img.shields.io/github/release/arjungandhi/zet.svg?style=flat-square)](https://github.com/arjungandhi/zet/releases/latest)
 
+Runs on [https://github.com/rwxrob/bonzai](https://github.com/rwxrob/bonzai)
+
 ## Install
 
 This command can be installed as a standalone program or composed into a
@@ -49,4 +51,5 @@ commands instead.
 All documentation (like manual pages) has been embedded into the source
 code of the application. See the source or run the program with help to
 access it.
+
 

@@ -10,6 +10,8 @@ import (
 	"github.com/rwxrob/vars"
 
 	"github.com/arjungandhi/zet/cmd/create"
+	"github.com/arjungandhi/zet/cmd/edit"
+	"github.com/arjungandhi/zet/cmd/search"
 	"github.com/arjungandhi/zet/cmd/title"
 )
 
@@ -50,5 +52,7 @@ var zetCmd = &Z.Cmd{
 		vars.Cmd,
 		create.Cmd,
 		title.Cmd,
+		search.Cmd,
+		edit.Cmd,
 	},
 }
