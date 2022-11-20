@@ -19,7 +19,7 @@ var Cmd = &Z.Cmd{
 	Name:    "create",
 	Summary: "Create a new zettelkasten note",
 	Description: `
-	The Create relys heavily on the user having a snippets directory with templates
+	The Create command relys heavily on the user having a snippets directory with templates
 	for the commands stored under $SNIPPETS/zet/<note-type>, the command *should* 
 	work with out this but theres a chance you'll see weird behavior. (eg. prompt
 	for a variables that do nothing. 
