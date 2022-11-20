@@ -1,6 +1,7 @@
 package title
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -26,6 +27,9 @@ var Cmd = &Z.Cmd{
 		// What this function does is walk the filesystem and dispatch various files
 		// to functions to get the title of the file. The title is then printed
 		// to stdout.
+		fileCount := 1
+		fileMap := map[int]string{}
+
 		filepath.Walk(zetdir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
@@ -43,12 +47,21 @@ var Cmd = &Z.Cmd{
 				if err == nil {
 					title := n.Title()
 					if title != "" {
-						fmt.Println(title)
+						fmt.Printf("%d. %s\n", fileCount, title)
+						fileMap[fileCount] = path
+						fileCount++
 					}
 				}
 			}
 			return nil
 		})
+
+		// save the file map to vars
+		b, err := json.Marshal(fileMap)
+		if err != nil {
+			return err
+		}
+		Z.Vars.Set(".zet.list", string(b))
 		return nil
 	},
 }

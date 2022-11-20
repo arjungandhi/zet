@@ -1,11 +1,14 @@
-package edit
+package del
 
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 
+	"github.com/manifoldco/promptui"
 	Z "github.com/rwxrob/bonzai/z"
 	"github.com/rwxrob/help"
 )
@@ -15,9 +18,9 @@ func init() {
 }
 
 var Cmd = &Z.Cmd{
-	Name:    "edit",
-	Summary: "edit a zettelkasten note",
-	Usage:   "edit [File Num]",
+	Name:    "del",
+	Summary: "delete a zettelkasten note",
+	Usage:   "del [File Num]",
 	MinArgs: 1,
 	MaxArgs: 1,
 	Commands: []*Z.Cmd{
@@ -45,13 +48,30 @@ var Cmd = &Z.Cmd{
 			return errors.New("index not found")
 		}
 
-		// open the file
-		// use SysExec to open the note in the default editor
-		editor, exists := os.LookupEnv("EDITOR")
-		if !exists {
-			editor = "vi"
+		// check if the user prompt for confirmation
+		prompt := promptui.Prompt{
+			Label:     fmt.Sprintf("Are you sure you want to delete %s", path),
+			IsConfirm: true,
 		}
-		Z.SysExec(editor, path)
+		_, err = prompt.Run()
+		if err != nil {
+			return nil
+		}
+
+		// remove the file from the path
+		dirPath := filepath.Dir(path)
+		os.RemoveAll(dirPath)
+
+		// delete the index from the zetlist
+		delete(zetlistMap, indexNum)
+		// marshal the zetlist
+		b, err := json.Marshal(zetlistMap)
+		if err != nil {
+			return err
+		}
+
+		// set the zetlist
+		Z.Vars.Set(".zet.list", string(b))
 
 		return nil
 	},

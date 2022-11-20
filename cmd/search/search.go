@@ -48,7 +48,7 @@ var Cmd = &Z.Cmd{
 				if err == nil {
 					search := n.Search(query)
 					if len(search) > 0 {
-						fmt.Printf("%d: %s\n", matchCount, n.Title())
+						fmt.Printf("%d. %s\n", matchCount, n.Title())
 						for _, s := range search {
 							fmt.Printf("\t%s\n", s)
 						}
