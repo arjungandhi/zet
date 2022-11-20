@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	Z "github.com/rwxrob/bonzai/z"
 	"github.com/rwxrob/help"
@@ -15,6 +16,9 @@ import (
 func init() {
 	Z.Vars.SoftInit()
 }
+
+var maxChars = 88
+var maxLines = 2
 
 var Cmd = &Z.Cmd{
 	Name:    "search",
@@ -49,8 +53,59 @@ var Cmd = &Z.Cmd{
 					search := n.Search(query)
 					if len(search) > 0 {
 						fmt.Printf("%d. %s\n", matchCount, n.Title())
-						for _, s := range search {
+						for i, s := range search {
+							// if the result starts with "# " then dont print it
+							// its the title
+							if strings.HasPrefix(s, "# ") {
+								continue
+							}
+							// if the results has more than 50 characters then
+							// get the location of the query in the string
+							// and then truncate the string to 50 characters
+							// fix this when min and max are implemented
+							if len(s) > maxChars {
+								index := strings.Index(s, query)
+
+								// get the nearest maxChars characters to the query
+								// start at index
+
+								start := index
+								end := index + len(query)
+								maxEnd := len(s) - 1
+
+								// now we interate backwards and forwards from the query
+								// until we have maxChars characters
+								for end-start < maxChars {
+									if start > 0 {
+										start--
+									}
+									if end < maxEnd {
+										end++
+									}
+								}
+
+								s = s[start:end]
+
+								if start > 0 {
+									s = s[3:]
+									s = "..." + s
+								}
+
+								if end < maxEnd {
+									s = s[:len(s)-4]
+									s = s + "..."
+								}
+
+							}
+
 							fmt.Printf("\t%s\n", s)
+
+							if i >= maxLines {
+								if i < len(search)-1 {
+									fmt.Println("\t...")
+								}
+								break
+							}
 						}
 						matches[matchCount] = path
 						matchCount++
