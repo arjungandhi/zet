@@ -3,7 +3,6 @@ package create
 import (
 	"errors"
 	"os"
-	"strings"
 	"text/template"
 
 	"github.com/manifoldco/promptui"
@@ -22,147 +21,106 @@ var Cmd = &Z.Cmd{
 	Commands: []*Z.Cmd{
 		noteCmd,
 		urlCmd,
+		recipeCmd,
 		help.Cmd,
 	},
 }
 
+type cmdParams struct {
+	Args    []string // positional args
+	Snippet string   // snippet to use
+}
+
+var noteCmdArgs = cmdParams{
+	Args:    []string{"title"},
+	Snippet: "note",
+}
 var noteCmd = &Z.Cmd{
 	Name:    "note",
-	Summary: "Create a new zettelkasten note",
-	Usage:   "create note [title]",
+	Summary: "Create a note in the zettelkasten",
 	Commands: []*Z.Cmd{
 		help.Cmd,
 	},
-	Call: func(x *Z.Cmd, args ...string) error {
-		type Note struct {
-			Title string
-		}
-		note := &Note{}
+	Call: noteCmdArgs.Call,
+}
 
-		if len(args) > 0 {
-			note.Title = strings.Join(args, " ")
-		} else {
-			// Prompt for title
-			prompt := promptui.Prompt{
-				Label: "Title",
-			}
-			result, err := prompt.Run()
-			if err != nil {
-				return err
-			}
-
-			note.Title = result
-		}
-
-		zetdir := Z.Vars.Get(".zet.zetdir")
-
-		notePath := zetdir + "/notes/" + uniq.IsoSecond()
-
-		// create a new folder for the note
-		err := os.MkdirAll(notePath, 0755)
-		if err != nil {
-			return err
-		}
-
-		// create a new file for the note
-		noteFile, err := os.Create(notePath + "/README.md")
-
-		snippets := Z.Vars.Get(".zet.snipdir")
-		// use the Read the contents of the snippet if it exists
-		snippet, err := os.ReadFile(snippets + "/zet/note.md")
-		if err == nil {
-			// Run the snippet through the template engine
-			template, err := template.New("note").Parse(string(snippet))
-			if err != nil {
-				return errors.New("Error parsing template")
-			}
-			template.Execute(noteFile, note)
-		}
-
-		// use SysExec to open the note in the default editor
-		editor, exists := os.LookupEnv("EDITOR")
-		if !exists {
-			editor = "vi"
-		}
-		Z.SysExec(editor, notePath+"/README.md")
-
-		return nil
-	},
+var urlCmdArgs = cmdParams{
+	Args:    []string{"title", "url"},
+	Snippet: "url",
 }
 
 var urlCmd = &Z.Cmd{
 	Name:    "url",
-	Summary: "Create a new zettelkasten url",
-	Usage:   "[url]",
+	Summary: "Create a url in the zettelkasten",
 	Commands: []*Z.Cmd{
 		help.Cmd,
 	},
-	MaxArgs: 1,
-	Call: func(x *Z.Cmd, args ...string) error {
-		type UrlNote struct {
-			Title string
-			Url   string
-		}
+	Call: urlCmdArgs.Call,
+}
 
-		urlFields := &UrlNote{}
+var recipeCmdArgs = cmdParams{
+	Args:    []string{"title"},
+	Snippet: "recipe",
+}
 
-		// check if the url is passed as an argument
-		if len(args) > 0 {
-			urlFields.Url = args[0]
-		} else {
-			// Prompt for the url
-			prompt := promptui.Prompt{
-				Label: "Url",
-			}
-			result, err := prompt.Run()
-			if err != nil {
-				return err
-			}
-			urlFields.Url = result
-		}
+var recipeCmd = &Z.Cmd{
+	Name:    "recipe",
+	Summary: "Create a recipe in the zettelkasten",
+	Commands: []*Z.Cmd{
+		help.Cmd,
+	},
+	Call: recipeCmdArgs.Call,
+}
 
-		// Prompt for the title
+func (cmdParams *cmdParams) Call(x *Z.Cmd, _ ...string) error {
+	// create a map to hold the values for the template
+	varMap := map[string]interface{}{}
+
+	for _, arg := range cmdParams.Args {
+		// prompt for the value of the arg
 		prompt := promptui.Prompt{
-			Label: "Title",
+			Label: arg,
 		}
 		result, err := prompt.Run()
 		if err != nil {
 			return err
 		}
-		urlFields.Title = result
+		varMap[arg] = result
+	}
 
-		zetdir := Z.Vars.Get(".zet.zetdir")
+	// fetch the path of useful vairables from Z.Vars
+	zetdir := Z.Vars.Get(".zet.zetdir")
+	snippets := Z.Vars.Get(".zet.snipdir")
 
-		urlPath := zetdir + "/notes/" + uniq.IsoSecond()
+	// create a unique filename
+	notePath := zetdir + "/" + uniq.IsoSecond()
 
-		// create a new folder for the note
-		err = os.MkdirAll(urlPath, 0755)
+	// create a new folder for the note
+	err := os.MkdirAll(notePath, 0755)
+	if err != nil {
+		return err
+	}
+
+	// create a new file for the note
+	noteFile, err := os.Create(notePath + "/README.md")
+
+	// use the Read the contents of the snippet if it exists
+	snippet, err := os.ReadFile(snippets + "/zet/" + cmdParams.Snippet + ".md")
+	if err == nil {
+		// Run the snippet through the template engine
+		template, err := template.New("note").Parse(string(snippet))
 		if err != nil {
-			return err
+			return errors.New("Error parsing template")
 		}
+		template.Execute(noteFile, varMap)
+	}
 
-		// create a new file for the url
-		urlNote, err := os.Create(urlPath + "/README.md")
+	// use SysExec to open the note in the default editor
+	editor, exists := os.LookupEnv("EDITOR")
+	if !exists {
+		editor = "vi"
+	}
+	Z.SysExec(editor, notePath+"/README.md")
 
-		snippets := Z.Vars.Get(".zet.snipdir")
-		// use the Read the contents of the snippet if it exists
-		snippet, err := os.ReadFile(snippets + "/zet/url.md")
-		if err == nil {
-			// Load the snippet into the template engine
-			template, err := template.New("url").Parse(string(snippet))
-			if err != nil {
-				return errors.New("Error parsing template")
-			}
-			template.Execute(urlNote, urlFields)
-		}
-
-		// use SysExec to open the note in the default editor
-		editor, exists := os.LookupEnv("EDITOR")
-		if !exists {
-			editor = "vi"
-		}
-		Z.SysExec(editor, urlPath+"/README.md")
-
-		return nil
-	},
+	return nil
 }
