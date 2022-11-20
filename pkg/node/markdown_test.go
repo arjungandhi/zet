@@ -3,7 +3,7 @@ package node_test
 import (
 	"testing"
 
-	"github.com/arjungandhi/zet/node"
+	"github.com/arjungandhi/zet/pkg/node"
 )
 
 type test struct {

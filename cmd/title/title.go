@@ -8,7 +8,7 @@ import (
 	Z "github.com/rwxrob/bonzai/z"
 	"github.com/rwxrob/help"
 
-	"github.com/arjungandhi/zet/node"
+	"github.com/arjungandhi/zet/pkg/node"
 )
 
 func init() {
