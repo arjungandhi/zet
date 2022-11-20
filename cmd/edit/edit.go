@@ -18,6 +18,11 @@ var Cmd = &Z.Cmd{
 	Name:    "edit",
 	Summary: "edit a zettelkasten note",
 	Usage:   "edit [File Num]",
+	Description: `
+	The edit command allows you to edit a note in the zettelkasten. It uses
+	the file numbers from the search and title commands to identify the note
+	to edit.
+	`,
 	MinArgs: 1,
 	MaxArgs: 1,
 	Commands: []*Z.Cmd{
@@ -28,7 +33,7 @@ var Cmd = &Z.Cmd{
 		// convert the index to number
 		indexNum, err := strconv.Atoi(index)
 		if err != nil {
-			return errors.New("index must be a number")
+			return errors.New("File Num must be a number")
 		}
 
 		zetlist := Z.Vars.Get(".zet.list")
@@ -42,7 +47,7 @@ var Cmd = &Z.Cmd{
 		// get the path of the file
 		path, ok := zetlistMap[indexNum]
 		if !ok {
-			return errors.New("index not found")
+			return errors.New("No file found with that index, make sure you've run 'zet search' or 'zet titles' first")
 		}
 
 		// open the file
@@ -55,8 +60,4 @@ var Cmd = &Z.Cmd{
 
 		return nil
 	},
-}
-
-func mdTitle(path string) string {
-	return ""
 }
