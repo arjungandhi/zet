@@ -30,7 +30,7 @@ var Cmd = &Z.Cmd{
 		help.Cmd,
 	},
 	Call: func(x *Z.Cmd, args ...string) error {
-		query := args[0]
+		query := strings.ToLower(args[0])
 
 		zetdir := Z.Vars.Get(".zet.zetdir")
 
@@ -64,11 +64,10 @@ var Cmd = &Z.Cmd{
 							// and then truncate the string to 50 characters
 							// fix this when min and max are implemented
 							if len(s) > maxChars {
-								index := strings.Index(s, query)
+								index := strings.Index(strings.ToLower(s), query)
 
 								// get the nearest maxChars characters to the query
 								// start at index
-
 								start := index
 								end := index + len(query)
 								maxEnd := len(s) - 1
