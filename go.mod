@@ -3,6 +3,7 @@ module github.com/arjungandhi/zet
 go 1.19
 
 require (
+	github.com/arjungandhi/go-utils v0.1.0
 	github.com/manifoldco/promptui v0.9.0
 	github.com/rwxrob/bonzai v0.19.0
 	github.com/rwxrob/help v0.5.2

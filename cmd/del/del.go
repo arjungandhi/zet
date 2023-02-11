@@ -1,13 +1,11 @@
 package del
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 
+	"github.com/arjungandhi/zet/cmd/search"
 	"github.com/manifoldco/promptui"
 	Z "github.com/rwxrob/bonzai/z"
 	"github.com/rwxrob/help"
@@ -26,36 +24,25 @@ var Cmd = &Z.Cmd{
 	the file numbers from the search and title commands to identify the note
 	to delete.
 	`,
-	MinArgs: 1,
+	MinArgs: 0,
 	MaxArgs: 1,
 	Commands: []*Z.Cmd{
 		help.Cmd,
 	},
 	Call: func(x *Z.Cmd, args ...string) error {
-		index := args[0]
-		// convert the index to number
-		indexNum, err := strconv.Atoi(index)
-		if err != nil {
-			return errors.New("FileNum must be a number")
+		query := ""
+		if len(args) > 0 {
+			query = args[0]
 		}
 
-		zetlist := Z.Vars.Get(".zet.list")
-		// unmarshal the zetlist
-		var zetlistMap map[int]string
-		err = json.Unmarshal([]byte(zetlist), &zetlistMap)
+		n, err := search.Search(query)
 		if err != nil {
 			return err
 		}
 
-		// get the path of the file
-		path, ok := zetlistMap[indexNum]
-		if !ok {
-			return errors.New("No file found with that index, make sure you've run 'zet search' or 'zet titles' first")
-		}
-
 		// check if the user prompt for confirmation
 		prompt := promptui.Prompt{
-			Label:     fmt.Sprintf("Are you sure you want to delete %s", path),
+			Label:     fmt.Sprintf("Are you sure you want to delete %s", n.Title()),
 			IsConfirm: true,
 		}
 		_, err = prompt.Run()
@@ -64,24 +51,9 @@ var Cmd = &Z.Cmd{
 		}
 
 		// remove the file from the path
-		dirPath := filepath.Dir(path)
+		dirPath := filepath.Dir(n.Path())
 		os.RemoveAll(dirPath)
-
-		// delete the index from the zetlist
-		delete(zetlistMap, indexNum)
-		// marshal the zetlist
-		b, err := json.Marshal(zetlistMap)
-		if err != nil {
-			return err
-		}
-
-		// set the zetlist
-		Z.Vars.Set(".zet.list", string(b))
 
 		return nil
 	},
-}
-
-func mdTitle(path string) string {
-	return ""
 }

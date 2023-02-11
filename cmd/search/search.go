@@ -1,16 +1,17 @@
 package search
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
+	"os/exec"
 	"strings"
 
 	Z "github.com/rwxrob/bonzai/z"
 	"github.com/rwxrob/help"
 
-	"github.com/arjungandhi/zet/pkg/node"
+	"github.com/arjungandhi/go-utils/pkg/shell"
+
+	node "github.com/arjungandhi/zet/pkg/node"
 )
 
 func init() {
@@ -24,107 +25,69 @@ var Cmd = &Z.Cmd{
 	Name:    "search",
 	Summary: "search the zettelcasten for some text",
 	Usage:   "search [Query]",
-	MinArgs: 1,
+	MinArgs: 0,
 	MaxArgs: 1,
 	Commands: []*Z.Cmd{
 		help.Cmd,
 	},
 	Call: func(x *Z.Cmd, args ...string) error {
-		query := strings.ToLower(args[0])
-
-		zetdir := Z.Vars.Get(".zet.zetdir")
-
-		matchCount := 1
-		matches := map[int]string{}
-		filepath.Walk(zetdir, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-
-			if info.IsDir() {
-				return nil
-			}
-			ext := filepath.Ext(path)
-			switch ext {
-			case ".md":
-				n := node.MarkdownNode{}
-				err := n.Load(path)
-				if err == nil {
-					search := n.Search(query)
-					if len(search) > 0 {
-						fmt.Printf("%d. %s\n", matchCount, n.Title())
-						for i, s := range search {
-							// if the result starts with "# " then dont print it
-							// its the title
-							if strings.HasPrefix(s, "# ") {
-								continue
-							}
-							// if the results has more than 50 characters then
-							// get the location of the query in the string
-							// and then truncate the string to 50 characters
-							// fix this when min and max are implemented
-							if len(s) > maxChars {
-								index := strings.Index(strings.ToLower(s), query)
-
-								// get the nearest maxChars characters to the query
-								// start at index
-								start := index
-								end := index + len(query)
-								maxEnd := len(s) - 1
-
-								// now we interate backwards and forwards from the query
-								// until we have maxChars characters
-								for end-start < maxChars {
-									if start > 0 {
-										start--
-									}
-									if end < maxEnd {
-										end++
-									}
-								}
-
-								s = s[start:end]
-
-								if start > 0 {
-									s = s[3:]
-									s = "..." + s
-								}
-
-								if end < maxEnd {
-									s = s[:len(s)-4]
-									s = s + "..."
-								}
-
-							}
-
-							fmt.Printf("\t%s\n", s)
-
-							if i >= maxLines {
-								if i < len(search)-1 {
-									fmt.Println("\t...")
-								}
-								break
-							}
-						}
-						matches[matchCount] = path
-						matchCount++
-					}
-				}
-			}
-			return nil
-		})
-		// after we have all the matches
-		// save them to the vars
-		b, err := json.Marshal(matches)
+		initQuery := ""
+		if len(args) > 0 {
+			initQuery = args[0]
+		}
+		n, err := Search(initQuery)
 		if err != nil {
 			return err
 		}
-		Z.Vars.Set(".zet.list", string(b))
+
+		fmt.Println(n.Path())
 
 		return nil
 	},
 }
 
-func mdTitle(path string) string {
-	return ""
+// Search the zettelcasten for some text
+func Search(initial_query string) (node.Node, error) {
+	// check for commands we need on the system
+	// fzf
+	fzf := shell.CheckCommand("fzf")
+	if !fzf {
+		return nil, fmt.Errorf("fzf not found please install it")
+	}
+
+	zetDir := Z.Vars.Get(".zet.zetdir")
+	nodes := node.LoadAll(zetDir)
+
+	search_path := []string{}
+	for _, n := range nodes {
+		search_path = append(search_path, n.Title())
+	}
+
+	search_str := strings.Join(search_path, "\n")
+
+	fzf_args := []string{
+		fmt.Sprintf("--query=%s", initial_query),
+		`--layout=reverse`,
+		`-1`,
+	}
+
+	cmd := exec.Command("fzf", fzf_args...)
+	cmd.Stdin = strings.NewReader(search_str)
+	cmd.Stderr = os.Stderr
+
+	selected, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	selected_str := strings.TrimSpace(string(selected))
+	title := strings.Split(selected_str, ":")[0]
+
+	for _, n := range nodes {
+		if n.Title() == title {
+			return n, nil
+		}
+	}
+
+	return nil, nil
 }

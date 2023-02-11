@@ -59,3 +59,7 @@ func (n *MarkdownNode) Search(query string) []string {
 
 	return results
 }
+
+func (n *MarkdownNode) Path() string {
+	return n.path
+}
