@@ -24,10 +24,10 @@ var Cmd = &bonzai.Cmd{
 			return err
 		}
 
-		// args[0] is an optional search term to feed into fzf
+		// args is an optional search term to feed into fzf
 		search := ""
 		if len(args) > 0 {
-			search = args[0]
+			search = strings.Join(args, " ")
 		}
 
 		// list all the notes in our zet directory
@@ -56,10 +56,10 @@ var deleteCmd = &bonzai.Cmd{
 			return err
 		}
 
-		// args[0] is an optional search term to feed into fzf
+		// argsis an optional search term to feed into fzf
 		search := ""
 		if len(args) > 0 {
-			search = args[0]
+			search = strings.Join(args, " ")
 		}
 
 		// list all the notes in our zet directory
@@ -93,7 +93,7 @@ var newCmd = &bonzai.Cmd{
 			return err
 		}
 
-		// args[0] is the title of the note
+		// args is the title of the note
 		title := ""
 		if len(args) > 0 {
 			title = strings.Join(args, " ")

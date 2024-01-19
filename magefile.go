@@ -48,6 +48,13 @@ func InstallDeps() error {
 	return sh.Run("go", "mod", "download")
 }
 
+// Test
+func Test() error {
+	mg.Deps(InstallDeps)
+	fmt.Println("Testing...")
+	return sh.Run("go", "test", "./...")
+}
+
 // Clean up after yourself
 func Clean() {
 	fmt.Println("Cleaning...")
