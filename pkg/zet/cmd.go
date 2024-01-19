@@ -96,7 +96,7 @@ var newCmd = &bonzai.Cmd{
 		// args[0] is the title of the note
 		title := ""
 		if len(args) > 0 {
-			title = args[0]
+			title = strings.Join(args, " ")
 		}
 
 		// create the note
