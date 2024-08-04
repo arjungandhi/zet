@@ -17,7 +17,7 @@ func init() {
 // exported main command
 var Cmd = &bonzai.Cmd{
 	Name:     "zet",
-	Commands: []*bonzai.Cmd{help.Cmd, listCmd, deleteCmd, newCmd},
+	Commands: []*bonzai.Cmd{help.Cmd, listCmd, deleteCmd, newCmd, renderCmd},
 	Call: func(cmd *bonzai.Cmd, args ...string) error {
 		zetDir, err := getZetDir()
 		if err != nil {
@@ -132,6 +132,50 @@ var listCmd = &bonzai.Cmd{
 
 		return nil
 	},
+}
+
+var renderCmd = &bonzai.Cmd{
+	Name: "render",
+	Call: func(cmd *bonzai.Cmd, args ...string) error {
+		zetDir, err := getZetDir()
+		if err != nil {
+			return err
+		}
+
+		// args is an optional search term to feed into fzf
+		search := ""
+		if len(args) > 0 {
+			search = strings.Join(args, " ")
+		}
+
+		// list all the notes in our zet directory
+		notes, err := ListNotes(zetDir)
+		if err != nil {
+			return err
+		}
+
+		// use fzf to find the note we want
+		note, err := findNote(notes, search)
+		if err != nil {
+			return err
+		}
+
+		// render the note
+		err = renderNote(note)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	},
+}
+
+// render uses glow to render a note
+func renderNote(n *Note) error {
+	cmd := exec.Command("glow", n.Path)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
 
 func editNote(n *Note) {
