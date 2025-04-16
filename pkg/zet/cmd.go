@@ -199,14 +199,14 @@ func getZetDir() (string, error) {
 // matches the search term
 // TODO: I wanna write a more sane search wrapper around fzf at some point
 func findNote(notes []*Note, search string) (*Note, error) {
-	fzf_args := []string{
+	options, err := fzf.ParseOptions(true, []string{
 		fmt.Sprintf("--query=%s", search),
 		"--delimiter=\t",
 		"--with-nth=2",
 		"--layout=reverse",
 		"-1",
 		"--preview=cat {3}",
-	}
+	})
 
 	// generate our search list
 	var searchOpts []string
