@@ -289,10 +289,337 @@ My Note.md  (with "# My Note" inside)
 - Provides dry-run option
 
 ### Implementation Steps
-1. Update filename sanitization logic
-2. Update `CreateNote()` for new structure and duplicate handling
-3. Update `ListNotes()` for flat structure and alphabetical sorting
-4. Update all commands to work with new structure
-5. Add migration command (optional but recommended)
-6. Update tests
-7. Fix existing bugs (undefined fzf variables, deprecated packages)
+
+#### 1. Create New Files (Clean Architecture)
+
+**`pkg/zet/filesystem.go`** - File operations layer
+```go
+// SanitizeFilename removes special characters from title, keeps spaces
+func SanitizeFilename(title string) string {
+    // Remove all non-alphanumeric except spaces
+    // Trim leading/trailing spaces
+    // Return: "My Note Title"
+}
+
+// NoteExists checks if a note file exists
+func NoteExists(dir, title string) bool {
+    sanitized := SanitizeFilename(title)
+    path := filepath.Join(dir, sanitized + ".md")
+    _, err := os.Stat(path)
+    return err == nil
+}
+
+// ReadNote reads a note file and returns Note struct
+func ReadNote(path string) (*Note, error) {
+    // Extract title from filename (remove .md extension)
+    // Read file contents as Body
+    // Return &Note{Title: title, Path: path, Body: content}
+}
+
+// WriteNote creates/updates a note file
+func WriteNote(dir, title, content string) error {
+    sanitized := SanitizeFilename(title)
+    path := filepath.Join(dir, sanitized + ".md")
+    return os.WriteFile(path, []byte(content), 0644)
+}
+
+// ListNoteFiles scans directory for .md files, returns sorted alphabetically
+func ListNoteFiles(dir string) ([]string, error) {
+    // Glob for *.md files
+    // Sort alphabetically
+    // Return file paths
+}
+```
+
+**`pkg/zet/config.go`** - Configuration layer
+```go
+// GetZetDir returns ZETDIR from environment or error
+func GetZetDir() (string, error) {
+    dir := os.Getenv("ZETDIR")
+    if dir == "" {
+        return "", fmt.Errorf("ZETDIR environment variable not set")
+    }
+    return dir, nil
+}
+
+// GetEditor returns EDITOR from environment or default
+func GetEditor() string {
+    editor := os.Getenv("EDITOR")
+    if editor == "" {
+        return "vi"
+    }
+    return editor
+}
+
+// GetRenderer returns markdown renderer command
+func GetRenderer() string {
+    return "glow" // Could make configurable later
+}
+```
+
+**`pkg/zet/finder.go`** - fzf integration layer
+```go
+// FindNote uses fzf to interactively select a note
+func FindNote(notes []*Note, searchTerm string) (*Note, error) {
+    // Create fzf input with note titles
+    // Run fzf with search term (if provided)
+    // Parse selection and return matching Note
+}
+```
+
+#### 2. Update Existing Files
+
+**`pkg/zet/zet.go`** - Business logic (orchestration)
+
+Update Note struct:
+```go
+type Note struct {
+    Title string  // Now from filename, not file content
+    Path  string  // Full path to .md file
+    Body  string  // File contents (no title heading)
+}
+```
+
+Replace `CreateNote()` with `CreateOrEditNote()`:
+```go
+func CreateOrEditNote(title string) error {
+    dir, err := config.GetZetDir()
+    if err != nil {
+        return err
+    }
+
+    sanitized := filesystem.SanitizeFilename(title)
+    path := filepath.Join(dir, sanitized + ".md")
+
+    // Check if note exists
+    if filesystem.NoteExists(dir, title) {
+        // Edit existing note
+        return openInEditor(path)
+    }
+
+    // Create new note with empty content (or just title as content?)
+    err = filesystem.WriteNote(dir, title, "")
+    if err != nil {
+        return err
+    }
+
+    // Open in editor
+    return openInEditor(path)
+}
+```
+
+Update `ListNotes()`:
+```go
+func ListNotes() ([]*Note, error) {
+    dir, err := config.GetZetDir()
+    if err != nil {
+        return nil, err
+    }
+
+    // Get all .md files
+    files, err := filesystem.ListNoteFiles(dir)
+    if err != nil {
+        return nil, err
+    }
+
+    // Convert to Note structs
+    var notes []*Note
+    for _, path := range files {
+        note, err := filesystem.ReadNote(path)
+        if err != nil {
+            continue // Skip errors
+        }
+        notes = append(notes, note)
+    }
+
+    return notes, nil
+}
+```
+
+Update `DeleteNote()`:
+```go
+func DeleteNote(note *Note) error {
+    // Simply remove the .md file (no directory)
+    return os.Remove(note.Path)
+}
+```
+
+Add new functions:
+```go
+func OpenNote(searchTerm string) error {
+    notes, err := ListNotes()
+    if err != nil {
+        return err
+    }
+
+    note, err := finder.FindNote(notes, searchTerm)
+    if err != nil {
+        return err
+    }
+
+    editor := config.GetEditor()
+    return openInEditor(note.Path)
+}
+
+func RenderNote(searchTerm string) error {
+    notes, err := ListNotes()
+    if err != nil {
+        return err
+    }
+
+    note, err := finder.FindNote(notes, searchTerm)
+    if err != nil {
+        return err
+    }
+
+    renderer := config.GetRenderer()
+    cmd := exec.Command(renderer, note.Path)
+    cmd.Stdout = os.Stdout
+    cmd.Stderr = os.Stderr
+    return cmd.Run()
+}
+
+func openInEditor(path string) error {
+    editor := config.GetEditor()
+    // Use bonzai.SysExec or exec.Command
+    return bonzai.SysExec(editor, path)
+}
+```
+
+**`pkg/zet/cmd.go`** - CLI layer (simplified)
+
+Update all commands to call zet layer:
+```go
+var Cmd = &bonzai.Cmd{
+    Name: "zet",
+    Commands: []*bonzai.Cmd{
+        helpCmd,
+        listCmd,
+        newCmd,
+        deleteCmd,
+        renderCmd,
+    },
+    Call: defaultCmd, // Interactive open
+}
+
+var defaultCmd = func(args []string) error {
+    search := strings.Join(args, " ")
+    return zet.OpenNote(search)
+}
+
+var listCmd = &bonzai.Cmd{
+    Name: "list",
+    Call: func(args []string) error {
+        notes, err := zet.ListNotes()
+        if err != nil {
+            return err
+        }
+        for _, note := range notes {
+            fmt.Println(note.Title)
+        }
+        return nil
+    },
+}
+
+var newCmd = &bonzai.Cmd{
+    Name: "new",
+    Call: func(args []string) error {
+        title := strings.Join(args, " ")
+        if title == "" {
+            return fmt.Errorf("title required")
+        }
+        return zet.CreateOrEditNote(title)
+    },
+}
+
+var deleteCmd = &bonzai.Cmd{
+    Name: "delete",
+    Call: func(args []string) error {
+        search := strings.Join(args, " ")
+        notes, err := zet.ListNotes()
+        if err != nil {
+            return err
+        }
+
+        note, err := finder.FindNote(notes, search)
+        if err != nil {
+            return err
+        }
+
+        err = zet.DeleteNote(note)
+        if err != nil {
+            return err
+        }
+
+        fmt.Printf("Deleted: %s\n", note.Title)
+        return nil
+    },
+}
+
+var renderCmd = &bonzai.Cmd{
+    Name: "render",
+    Call: func(args []string) error {
+        search := strings.Join(args, " ")
+        return zet.RenderNote(search)
+    },
+}
+```
+
+#### 3. Key Implementation Details
+
+**Title Extraction:**
+- Old: Parse first line, strip "# " prefix
+- New: Extract from filename, remove ".md" extension
+  ```go
+  title := strings.TrimSuffix(filepath.Base(path), ".md")
+  ```
+
+**File Structure:**
+- Old: `$ZETDIR/20231103T211524Z/README.md`
+- New: `$ZETDIR/My Note Title.md`
+
+**Sanitization Logic:**
+```go
+func SanitizeFilename(title string) string {
+    // Use regex: [^a-zA-Z0-9 ] to remove non-alphanumeric except spaces
+    re := regexp.MustCompile(`[^a-zA-Z0-9 ]`)
+    sanitized := re.ReplaceAllString(title, "")
+
+    // Replace multiple spaces with single space
+    sanitized = strings.Join(strings.Fields(sanitized), " ")
+
+    // Trim spaces
+    return strings.TrimSpace(sanitized)
+}
+```
+
+**Alphabetical Sorting:**
+```go
+import "sort"
+
+func ListNoteFiles(dir string) ([]string, error) {
+    files, err := filepath.Glob(filepath.Join(dir, "*.md"))
+    if err != nil {
+        return nil, err
+    }
+
+    sort.Strings(files)
+    return files, nil
+}
+```
+
+#### 4. Deprecated Package Fixes
+- Replace `io/ioutil.WriteFile` with `os.WriteFile`
+- Replace `io/ioutil.ReadFile` with `os.ReadFile`
+
+#### 5. Bug Fixes
+- Remove undefined `fzf` package references in cmd.go
+- Fix `fzf_args` undefined variable
+- Remove unused `options` variable
+
+#### 6. Migration Status
+- ✅ Migration script created and executed
+- ✅ 207 notes migrated from timestamp dirs to title-based files
+- ✅ Empty timestamp directories removed
+- ✅ Title headings removed from all note files
+- Next: Implement new architecture
