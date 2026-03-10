@@ -1,9 +1,12 @@
 package zet
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
+	"time"
 
 	bonzai "github.com/rwxrob/bonzai/z"
 )
@@ -26,6 +29,57 @@ func CreateOrEditNote(title string) (string, error) {
 	if !NoteExists(dir, title) {
 		err = WriteNote(dir, title, "")
 		if err != nil {
+			return "", err
+		}
+	}
+
+	return path, nil
+}
+
+func JournalNote(dateStr string) (string, error) {
+	dir, err := GetZetDir()
+	if err != nil {
+		return "", err
+	}
+
+	var date string
+	if dateStr == "" {
+		date = time.Now().Format("2006-01-02")
+	} else {
+		t, err := time.Parse("2006-01-02", dateStr)
+		if err != nil {
+			return "", fmt.Errorf("invalid date %q, expected YYYY-MM-DD format", dateStr)
+		}
+		date = t.Format("2006-01-02")
+	}
+
+	path := filepath.Join(dir, "journal.md")
+
+	// Create file with top-level header if it doesn't exist
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		if err := os.WriteFile(path, []byte("# Journal\n\n"), 0644); err != nil {
+			return "", err
+		}
+	}
+
+	// Add a dated entry header near the top if one doesn't already exist
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+
+	header := "## " + date
+	text := string(content)
+	if !strings.Contains(text, header) {
+		// Insert after the "# Journal" line so newest entries are at the top
+		entry := header + "\n\n"
+		idx := strings.Index(text, "\n")
+		if idx != -1 {
+			text = text[:idx+1] + "\n" + entry + text[idx+1:]
+		} else {
+			text = text + "\n" + entry
+		}
+		if err := os.WriteFile(path, []byte(text), 0644); err != nil {
 			return "", err
 		}
 	}

@@ -10,7 +10,7 @@ import (
 
 var Cmd = &bonzai.Cmd{
 	Name:     "zet",
-	Commands: []*bonzai.Cmd{help.Cmd, listCmd, deleteCmd, newCmd, renderCmd},
+	Commands: []*bonzai.Cmd{help.Cmd, listCmd, deleteCmd, newCmd, renderCmd, journalCmd},
 	Call: func(cmd *bonzai.Cmd, args ...string) error {
 		search := strings.Join(args, " ")
 		return OpenNote(search)
@@ -73,6 +73,20 @@ var listCmd = &bonzai.Cmd{
 		}
 
 		return nil
+	},
+}
+
+var journalCmd = &bonzai.Cmd{
+	Name: "journal",
+	Call: func(cmd *bonzai.Cmd, args ...string) error {
+		date := strings.Join(args, " ")
+		path, err := JournalNote(date)
+		if err != nil {
+			return err
+		}
+
+		editor := GetEditor()
+		return bonzai.SysExec(editor, path)
 	},
 }
 
