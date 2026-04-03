@@ -22,5 +22,5 @@ func GetEditor() string {
 }
 
 func GetRenderer() string {
-	return "glow"
+	return "glowm"
 }
