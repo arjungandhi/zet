@@ -1,5 +1,3 @@
-github.com/magefile/mage v1.15.0 h1:BvGheCMAsG3bWUDbZ8AyXXpCNwU9u5CB6sM+HNb9HYg=
-github.com/magefile/mage v1.15.0/go.mod h1:z5UZb/iS3GoOSn0JgWuiw7dxlurVYTu+/jHXqQg881A=
 github.com/rwxrob/bonzai v0.20.10 h1:MC77uTOENkQA2Zt/r98teSgP/bHuGw04s5k1ECAKgq0=
 github.com/rwxrob/bonzai v0.20.10/go.mod h1:QmLf6NXoVtTf3pY7eYR4+k9daz2bdRiiq5ArFckAW3E=
 github.com/rwxrob/compcmd v0.3.0 h1:AlJNItb7+Yk17qmH5E7TJFyBXhna/rS3NeQAgjqbFls=

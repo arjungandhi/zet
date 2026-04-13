@@ -3,7 +3,6 @@ module github.com/arjungandhi/zet
 go 1.23.0
 
 require (
-	github.com/magefile/mage v1.15.0
 	github.com/rwxrob/bonzai v0.20.10
 	github.com/rwxrob/help v0.7.2
 )
