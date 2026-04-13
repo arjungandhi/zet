@@ -135,7 +135,7 @@ func TestGetEditor(t *testing.T) {
 
 func TestGetRenderer(t *testing.T) {
 	result := zet.GetRenderer()
-	expected := "glow"
+	expected := "glowm"
 
 	if result != expected {
 		t.Errorf("GetRenderer() = %q, want %q", result, expected)
