@@ -55,33 +55,43 @@ func JournalNote(dateStr string) (string, error) {
 
 	path := filepath.Join(dir, "journal.md")
 
-	// Create file with top-level header if it doesn't exist
+	seed := "# Journal\n\n\n\n---\n\n"
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		if err := os.WriteFile(path, []byte("# Journal\n\n"), 0644); err != nil {
+		if err := os.WriteFile(path, []byte(seed), 0644); err != nil {
 			return "", err
 		}
 	}
 
-	// Add a dated entry header near the top if one doesn't already exist
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
+	text := string(content)
+
+	// Back-fill separator for older journals that don't have one.
+	sep := "\n---\n"
+	if !strings.Contains(text, sep) {
+		idx := strings.Index(text, "\n")
+		insert := "\n\n---\n"
+		if idx != -1 {
+			text = text[:idx+1] + insert + text[idx+1:]
+		} else {
+			text = text + insert
+		}
+	}
 
 	header := "## " + date
-	text := string(content)
 	if !strings.Contains(text, header) {
-		// Insert after the "# Journal" line so newest entries are at the top
+		// Insert after the goals separator so newest dated entries are at the top,
+		// but below the pinned Goals section.
 		entry := header + "\n\n"
-		idx := strings.Index(text, "\n")
-		if idx != -1 {
-			text = text[:idx+1] + "\n" + entry + text[idx+1:]
-		} else {
-			text = text + "\n" + entry
-		}
-		if err := os.WriteFile(path, []byte(text), 0644); err != nil {
-			return "", err
-		}
+		sepIdx := strings.Index(text, sep)
+		insertAt := sepIdx + len(sep)
+		text = text[:insertAt] + "\n" + entry + text[insertAt:]
+	}
+
+	if err := os.WriteFile(path, []byte(text), 0644); err != nil {
+		return "", err
 	}
 
 	return path, nil
